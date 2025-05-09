@@ -11,9 +11,7 @@ import javax.websocket.server.ServerEndpointConfig;
  * WebSocket endpoints được đăng ký
  */
 @WebListener
-public class WebSocketConfigurator implements ServletContextListener {
-
-    @Override
+public class WebSocketConfigurator implements ServletContextListener {    @Override
     public void contextInitialized(ServletContextEvent sce) {
         System.out.println("=== WebSocketConfigurator: Khởi tạo WebSocket ===");
         // Lấy container của WebSocket từ ServletContext
@@ -39,14 +37,25 @@ public class WebSocketConfigurator implements ServletContextListener {
             
             System.out.println("=== WebSocket endpoint đã được khởi tạo thành công ===");
             
+            // Khởi động dịch vụ gửi tin nhắn định kỳ
+            MessageSender.getInstance();
+            System.out.println("=== Khởi động dịch vụ gửi tin nhắn định kỳ ===");
+            
         } catch (Exception e) {
             System.err.println("Lỗi khi khởi tạo WebSocket endpoint: " + e.getMessage());
             e.printStackTrace();
         }
-    }
-
-    @Override
+    }    @Override
     public void contextDestroyed(ServletContextEvent sce) {
         System.out.println("=== WebSocketConfigurator: Dọn dẹp WebSocket ===");
+        
+        // Dừng dịch vụ gửi tin nhắn định kỳ
+        try {
+            MessageSender.getInstance().shutdown();
+            System.out.println("=== Đã dừng dịch vụ gửi tin nhắn định kỳ ===");
+        } catch (Exception e) {
+            System.err.println("Lỗi khi dừng MessageSender: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 }

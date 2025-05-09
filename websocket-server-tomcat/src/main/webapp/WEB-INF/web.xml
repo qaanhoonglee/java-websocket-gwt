@@ -11,9 +11,5 @@
     <listener>
         <listener-class>com.example.websocket.WebSocketConfigurator</listener-class>
     </listener>
-    
-    <welcome-file-list>
-        <welcome-file>index.html</welcome-file>
-    </welcome-file-list>
 
 </web-app>

@@ -7,41 +7,73 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 20px;
+            margin: 0;
             padding: 0;
+            height: 100%;
             background-color: #f5f5f5;
+            overflow: hidden;
         }
-        .main-panel {
-            max-width: 800px;
-            margin: 0 auto;
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        html {
+            height: 100%;
         }
-        .status-panel {
-            padding: 10px;
-            margin-bottom: 10px;
-            border-radius: 4px;
+        .gwt-status-panel {
+            padding: 8px;
             background-color: #f8f9fa;
+            border-bottom: 1px solid #ddd;
         }
-        .input-panel {
-            margin: 10px 0;
+        .gwt-status-label {
+            font-weight: bold;
+            color: #444;
         }
-        .connection-panel {
-            margin-top: 10px;
+        .gwt-message-time {
+            color: #666;
+            font-size: 0.85em;
+        }
+        .gwt-messages-table {
+            width: 100%;
+            table-layout: fixed;
+        }
+        .gwt-message-content {
+            word-wrap: break-word;
+        }
+        .gwt-message-row-even {
+            background-color: #f9f9f9;
+        }
+        .gwt-message-row-odd {
+            background-color: #ffffff;
+        }
+        .gwt-message-input {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .gwt-send-button {
+            margin-left: 5px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 8px 15px;
+            cursor: pointer;
+        }
+        .gwt-send-button:hover {
+            background-color: #45a049;
         }
         button {
+            margin: 5px;
             padding: 8px 15px;
-            margin-right: 5px;
-            background-color: #4CAF50;
+            background-color: #2196F3;
             color: white;
             border: none;
             border-radius: 4px;
             cursor: pointer;
         }
         button:hover {
-            background-color: #45a049;
+            background-color: #0b7dda;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
         }
     </style>
 </head>
