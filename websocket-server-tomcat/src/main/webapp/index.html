@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>WebSocket Server Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+        }
+        #messageArea {
+            width: 100%;
+            height: 300px;
+            border: 1px solid #ddd;
+            margin-bottom: 10px;
+            padding: 10px;
+            box-sizing: border-box;
+            overflow-y: auto;
+        }
+        #messageInput {
+            width: 70%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .status {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .connected {
+            background-color: #dff0d8;
+            color: #3c763d;
+        }
+        .disconnected {
+            background-color: #f2dede;
+            color: #a94442;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>WebSocket Server Test</h1>
+        <div id="status" class="status disconnected">Trạng thái: Đã ngắt kết nối</div>
+        <div id="messageArea"></div>
+        <div>
+            <input type="text" id="messageInput" placeholder="Nhập tin nhắn...">
+            <button onclick="sendMessage()">Gửi</button>
+            <button onclick="connectWebSocket()">Kết nối</button>
+            <button onclick="disconnectWebSocket()">Ngắt kết nối</button>
+        </div>
+    </div>
+
+    <script>
+        let socket;
+        const messageArea = document.getElementById("messageArea");
+        const statusDiv = document.getElementById("status");
+        const messageInput = document.getElementById("messageInput");
+        
+        function connectWebSocket() {
+            // Đóng kết nối cũ nếu có
+            if (socket) {
+                socket.close();
+            }
+            
+            // Lấy hostname từ URL hiện tại
+            const host = window.location.host;
+            const wsUrl = `ws://${host}/websocket-server/notification-ws`;
+            
+            try {
+                socket = new WebSocket(wsUrl);
+                
+                socket.onopen = function(event) {
+                    addMessage("Đã kết nối tới WebSocket server");
+                    statusDiv.className = "status connected";
+                    statusDiv.textContent = "Trạng thái: Đã kết nối";
+                };
+                
+                socket.onmessage = function(event) {
+                    addMessage(`Nhận tin nhắn: ${event.data}`);
+                };
+                
+                socket.onclose = function(event) {
+                    addMessage("Kết nối WebSocket đã đóng");
+                    statusDiv.className = "status disconnected";
+                    statusDiv.textContent = "Trạng thái: Đã ngắt kết nối";
+                };
+                
+                socket.onerror = function(event) {
+                    addMessage("Lỗi WebSocket");
+                    console.error("WebSocket error:", event);
+                    statusDiv.className = "status disconnected";
+                    statusDiv.textContent = "Trạng thái: Lỗi kết nối";
+                };
+            } catch (error) {
+                addMessage(`Lỗi: ${error.message}`);
+                console.error("Error:", error);
+            }
+        }
+        
+        function disconnectWebSocket() {
+            if (socket) {
+                socket.close();
+                socket = null;
+            }
+        }
+        
+        function sendMessage() {
+            if (!socket || socket.readyState !== WebSocket.OPEN) {
+                addMessage("WebSocket chưa kết nối!");
+                return;
+            }
+            
+            const message = messageInput.value.trim();
+            if (message) {
+                socket.send(message);
+                addMessage(`Đã gửi: ${message}`);
+                messageInput.value = "";
+            }
+        }
+        
+        function addMessage(message) {
+            const messageElement = document.createElement("div");
+            messageElement.textContent = message;
+            messageArea.appendChild(messageElement);
+            messageArea.scrollTop = messageArea.scrollHeight;
+        }
+        
+        // Xử lý phím Enter
+        messageInput.addEventListener("keyup", function(event) {
+            if (event.key === "Enter") {
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html>
