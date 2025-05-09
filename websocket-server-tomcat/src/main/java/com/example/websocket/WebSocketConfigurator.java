@@ -45,7 +45,8 @@ public class WebSocketConfigurator implements ServletContextListener {    @Overr
             System.err.println("Lỗi khi khởi tạo WebSocket endpoint: " + e.getMessage());
             e.printStackTrace();
         }
-    }    @Override
+    }
+    @Override
     public void contextDestroyed(ServletContextEvent sce) {
         System.out.println("=== WebSocketConfigurator: Dọn dẹp WebSocket ===");
         

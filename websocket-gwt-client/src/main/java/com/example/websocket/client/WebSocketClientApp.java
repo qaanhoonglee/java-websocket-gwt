@@ -39,6 +39,8 @@ public class WebSocketClientApp implements EntryPoint {    // Constants
     private static final String STATUS_DISCONNECTED = "Trạng thái: Chưa kết nối";
     private static final String STATUS_CONNECTED = "Trạng thái: Đã kết nối";
     private static final String STATUS_ERROR = "Trạng thái: Lỗi kết nối";
+    private static final String USER_NAME_LABEL = "Tên người dùng:";
+    private static final String RECIPIENT_LABEL = "Gửi đến:";
     
     // Message constants
     private static final int MESSAGE_TIME_COLUMN = 0;
@@ -47,6 +49,7 @@ public class WebSocketClientApp implements EntryPoint {    // Constants
     
     // WebSocket object
     private WebSocket webSocket;
+    private String currentUserName = "";
     
     // UI Components
     private DockLayoutPanel mainPanel = new DockLayoutPanel(Unit.PX);
@@ -54,12 +57,14 @@ public class WebSocketClientApp implements EntryPoint {    // Constants
     private FlexTable messagesTable = new FlexTable();
     private ScrollPanel scrollPanel = new ScrollPanel(messagesTable);
     private TextBox messageInput = new TextBox();
+    private TextBox userNameInput = new TextBox();
+    private TextBox recipientInput = new TextBox();
     private Button sendButton = new Button(SEND_BUTTON_TEXT);
     private Button connectButton = new Button(CONNECT_BUTTON_TEXT);
     private Button disconnectButton = new Button(DISCONNECT_BUTTON_TEXT);
     private Button clearButton = new Button(CLEAR_BUTTON_TEXT);
     private Label statusLabel = new Label(STATUS_DISCONNECTED);
-    private DateTimeFormat timeFormat = DateTimeFormat.getFormat("HH:mm:ss");    /**
+    private DateTimeFormat timeFormat = DateTimeFormat.getFormat("HH:mm:ss");/**
      * Entry point method - được gọi khi ứng dụng GWT khởi động
      */
     public void onModuleLoad() {
@@ -74,8 +79,7 @@ public class WebSocketClientApp implements EntryPoint {    // Constants
     }
       /**
      * Thiết lập giao diện người dùng
-     */
-    private void setupUI() {
+     */    private void setupUI() {
         mainPanel.setSize("100%", "100%");
         
         // Tạo panel chứa nội dung 
@@ -90,13 +94,33 @@ public class WebSocketClientApp implements EntryPoint {    // Constants
         HTML headerLabel = new HTML("<h2>" + HEADER_TITLE + "</h2>");
         headerPanel.add(headerLabel);
         
-        // Tạo panel trạng thái kết nối
+        // Tạo panel thông tin kết nối (userName + trạng thái)
+        HorizontalPanel connectionPanel = new HorizontalPanel();
+        connectionPanel.setWidth("100%");
+        connectionPanel.setSpacing(10);
+        connectionPanel.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
+        
+        // Panel nhập tên người dùng
+        HorizontalPanel userNamePanel = new HorizontalPanel();
+        userNamePanel.setSpacing(5);
+        userNamePanel.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
+        
+        Label userNameLabel = new Label(USER_NAME_LABEL);
+        userNameInput.setWidth("150px");
+        
+        userNamePanel.add(userNameLabel);
+        userNamePanel.add(userNameInput);
+        connectionPanel.add(userNamePanel);
+        
+        // Panel trạng thái
         HorizontalPanel statusPanel = new HorizontalPanel();
         statusPanel.setWidth("100%");
         statusPanel.setStyleName("gwt-status-panel");
         
         statusLabel.setStyleName("gwt-status-label");
         statusPanel.add(statusLabel);
+        connectionPanel.add(statusPanel);
+        connectionPanel.setCellHorizontalAlignment(statusPanel, HasHorizontalAlignment.ALIGN_RIGHT);
         
         // Panel hiển thị tin nhắn
         messagesTable.setWidth("100%");
@@ -114,7 +138,20 @@ public class WebSocketClientApp implements EntryPoint {    // Constants
         messagesDecoratorPanel.setWidth("100%");
         messagesDecoratorPanel.add(scrollPanel);
         
-        // Tạo panel nhập liệu
+        // Panel nhập người nhận
+        HorizontalPanel recipientPanel = new HorizontalPanel();
+        recipientPanel.setWidth("100%");
+        recipientPanel.setSpacing(5);
+        recipientPanel.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
+        
+        Label recipientLabel = new Label(RECIPIENT_LABEL);
+        recipientInput.setWidth("150px");
+        recipientInput.setTitle("Để trống để gửi cho tất cả mọi người");
+        
+        recipientPanel.add(recipientLabel);
+        recipientPanel.add(recipientInput);
+        
+        // Tạo panel nhập nội dung tin nhắn
         HorizontalPanel inputPanel = new HorizontalPanel();
         inputPanel.setWidth("100%");
         inputPanel.setSpacing(5);
@@ -129,8 +166,7 @@ public class WebSocketClientApp implements EntryPoint {    // Constants
         inputPanel.add(messageInput);
         inputPanel.setCellWidth(messageInput, "85%");
         inputPanel.add(sendButton);
-        
-        // Panel điều khiển kết nối
+          // Panel điều khiển kết nối
         HorizontalPanel controlPanel = new HorizontalPanel();
         controlPanel.setSpacing(10);
         controlPanel.setWidth("100%");
@@ -144,8 +180,9 @@ public class WebSocketClientApp implements EntryPoint {    // Constants
         
         // Thêm các thành phần vào content panel
         contentPanel.add(headerPanel);
-        contentPanel.add(statusPanel);
+        contentPanel.add(connectionPanel);
         contentPanel.add(messagesDecoratorPanel);
+        contentPanel.add(recipientPanel);
         contentPanel.add(inputPanel);
         contentPanel.add(controlPanel);
         
@@ -200,9 +237,15 @@ public class WebSocketClientApp implements EntryPoint {    // Constants
     }
       /**
      * Kết nối tới WebSocket server
-     */
-    private void connectWebSocket() {
+     */    private void connectWebSocket() {
         try {
+            // Kiểm tra nếu tên người dùng trống
+            currentUserName = userNameInput.getText().trim();
+            if (currentUserName.isEmpty()) {
+                addMessage("Lỗi", "Vui lòng nhập tên người dùng trước khi kết nối");
+                return;
+            }
+            
             // Đóng kết nối cũ nếu có
             if (webSocket != null) {
                 webSocket.close();
@@ -212,16 +255,61 @@ public class WebSocketClientApp implements EntryPoint {    // Constants
             String host = Window.Location.getHost();
             String wsUrl = "ws://" + host + "/websocket-server/notification-ws";
             
-            addMessage("Hệ thống", "Đang kết nối tới: " + wsUrl);
+            addMessage("Hệ thống", "Đang kết nối tới: " + wsUrl + " với tên người dùng: " + currentUserName);
             
             // Tạo kết nối WebSocket mới
             webSocket = WebSocket.create(wsUrl);
             
             // Thiết lập các callback cho WebSocket
-            WebSocketCallback callback = new WebSocketCallback() {
-                @Override
+            WebSocketCallback callback = new WebSocketCallback() {                @Override
                 public void onMessage(String message) {
-                    addMessage("Server", message);
+                    try {
+                        // Thử phân tích tin nhắn dạng JSON
+                        if (message.startsWith("{")) {
+                            // Giả lập xử lý JSON bằng cách tìm các trường
+                            if (message.contains("\"type\"")) {
+                                String type = extractJsonField(message, "type");
+                                
+                                if ("chat".equals(type)) {
+                                    String sender = extractJsonField(message, "sender");
+                                    String content = extractJsonField(message, "content");
+                                    addMessage(sender, content);
+                                    return;
+                                } else if ("private-chat".equals(type)) {
+                                    String sender = extractJsonField(message, "sender");
+                                    String content = extractJsonField(message, "content");
+                                    addMessage("[Tin nhắn riêng từ " + sender + "]", content);
+                                    return;
+                                } else if ("private-chat-sent".equals(type)) {
+                                    String recipient = extractJsonField(message, "recipient");
+                                    String content = extractJsonField(message, "content");
+                                    addMessage("[Đã gửi riêng cho " + recipient + "]", content);
+                                    return;
+                                } else if ("system".equals(type)) {
+                                    String systemMsg = extractJsonField(message, "message");
+                                    addMessage("Hệ thống", systemMsg);
+                                    return;
+                                } else if ("error".equals(type)) {
+                                    String errorMsg = extractJsonField(message, "message");
+                                    addMessage("Lỗi", errorMsg);
+                                    return;
+                                } else if ("welcome".equals(type)) {
+                                    String welcomeMsg = extractJsonField(message, "message");
+                                    addMessage("Server", welcomeMsg);
+                                    return;
+                                } else if ("register-confirm".equals(type)) {
+                                    String userName = extractJsonField(message, "userName");
+                                    addMessage("Hệ thống", "Đã đăng ký thành công với tên: " + userName);
+                                    return;
+                                }
+                            }
+                        }
+                        
+                        // Nếu không phải JSON hoặc không xử lý được, hiển thị nguyên văn
+                        addMessage("Server", message);
+                    } catch (Exception e) {
+                        addMessage("Server", message);
+                    }
                 }
 
                 @Override
@@ -231,6 +319,10 @@ public class WebSocketClientApp implements EntryPoint {    // Constants
                     disconnectButton.setEnabled(true);
                     sendButton.setEnabled(true);
                     addMessage("Hệ thống", "WebSocket đã kết nối");
+                    
+                    // Đăng ký tên người dùng với server
+                    String registerMessage = "{\"type\":\"register\",\"userName\":\"" + currentUserName + "\"}";
+                    webSocket.send(registerMessage);
                 }
 
                 @Override
@@ -260,22 +352,21 @@ public class WebSocketClientApp implements EntryPoint {    // Constants
             addMessage("Lỗi", "Lỗi khi kết nối: " + e.getMessage());
             GWT.log("Lỗi khi kết nối WebSocket", e);
         }
-    }
-      /**
+    }    /**
      * Ngắt kết nối WebSocket
      */
     private void disconnectWebSocket() {
         if (webSocket != null) {
             webSocket.close();
             webSocket = null;
+            currentUserName = "";
             addMessage("Hệ thống", "Đã đóng kết nối WebSocket");
             connectButton.setEnabled(true);
             disconnectButton.setEnabled(false);
             sendButton.setEnabled(false);
         }
     }
-    
-    /**
+      /**
      * Gửi tin nhắn qua WebSocket
      */
     private void sendMessage() {
@@ -290,8 +381,20 @@ public class WebSocketClientApp implements EntryPoint {    // Constants
         }
         
         try {
-            webSocket.send(message);
-            addMessage("Bạn", message);
+            String recipient = recipientInput.getText().trim();
+            String jsonMessage;
+            
+            if (recipient.isEmpty()) {
+                // Gửi tin nhắn cho tất cả
+                jsonMessage = "{\"type\":\"chat\",\"content\":\"" + message + "\"}";
+                addMessage("Bạn (cho tất cả)", message);
+            } else {
+                // Gửi tin nhắn cho người dùng cụ thể
+                jsonMessage = "{\"type\":\"chat\",\"content\":\"" + message + "\",\"recipient\":\"" + recipient + "\"}";
+                addMessage("Bạn (riêng cho " + recipient + ")", message);
+            }
+            
+            webSocket.send(jsonMessage);
             messageInput.setText("");
             messageInput.setFocus(true);
         } catch (Exception e) {
@@ -347,5 +450,60 @@ public class WebSocketClientApp implements EntryPoint {    // Constants
                 scrollPanel.scrollToBottom();
             }
         });
+    }
+      /**
+     * Phương thức đơn giản để trích xuất giá trị từ một trường trong chuỗi JSON
+     * Lưu ý: Đây là một cách thực hiện đơn giản, không phải là một JSON parser đầy đủ
+     */
+    private String extractJsonField(String jsonString, String fieldName) {
+        // Dùng phân tích đơn giản để tìm giá trị
+        // Lưu ý: chỉ áp dụng cho JSON đơn giản, không xử lý các trường hợp phức tạp
+        String value = null;
+        
+        try {
+            // Có thể tìm theo từ khóa trước rồi phân tích đơn giản
+            int startPos = jsonString.indexOf("\"" + fieldName + "\"");
+            if (startPos >= 0) {
+                // Tìm dấu :
+                int colonPos = jsonString.indexOf(":", startPos);
+                if (colonPos >= 0) {
+                    // Tìm vị trí bắt đầu và kết thúc của giá trị
+                    int valueStart = colonPos + 1;
+                    // Bỏ qua khoảng trắng sau dấu :
+                    while (valueStart < jsonString.length() && 
+                           (jsonString.charAt(valueStart) == ' ' || 
+                            jsonString.charAt(valueStart) == '\t')) {
+                        valueStart++;
+                    }
+                    
+                    if (valueStart < jsonString.length()) {
+                        char startChar = jsonString.charAt(valueStart);
+                        if (startChar == '"') {
+                            // Giá trị là chuỗi
+                            int valueEnd = jsonString.indexOf("\"", valueStart + 1);
+                            if (valueEnd >= 0) {
+                                value = jsonString.substring(valueStart + 1, valueEnd);
+                            }
+                        } else if (startChar == '{' || startChar == '[') {
+                            // Giá trị là đối tượng hoặc mảng - không xử lý
+                            value = "[object]";
+                        } else {
+                            // Giá trị là số hoặc boolean
+                            int valueEnd = jsonString.indexOf(",", valueStart);
+                            if (valueEnd < 0) {
+                                valueEnd = jsonString.indexOf("}", valueStart);
+                            }
+                            if (valueEnd >= 0) {
+                                value = jsonString.substring(valueStart, valueEnd).trim();
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            GWT.log("Lỗi khi phân tích JSON: " + e.getMessage(), e);
+        }
+        
+        return value;
     }
 }
