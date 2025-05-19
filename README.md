@@ -2,11 +2,21 @@
 
 Dự án mẫu kết hợp WebSocket và Google Web Toolkit (GWT) để xây dựng ứng dụng thời gian thực.
 
+# Java WebSocket with GWT
+
+Sample project combining WebSocket and Google Web Toolkit (GWT) to build real-time applications.
+
 ## Tổng quan
 
 Dự án này bao gồm hai thành phần chính:
 - **Server WebSocket** (websocket-server-tomcat): Cung cấp endpoint WebSocket để xử lý kết nối và tin nhắn
 - **Client GWT** (websocket-gwt-client): Cung cấp giao diện người dùng sử dụng GWT 2.7
+
+## Overview
+
+This project consists of two main components:
+- **WebSocket Server** (websocket-server-tomcat): Provides WebSocket endpoints for handling connections and messages
+- **GWT Client** (websocket-gwt-client): Provides a user interface using GWT 2.7
 
 ## Yêu cầu
 
@@ -14,6 +24,13 @@ Dự án này bao gồm hai thành phần chính:
 - Maven 3.6.0 hoặc cao hơn
 - Apache Tomcat 9 hoặc tương đương
 - Trình duyệt web hiện đại
+
+## Requirements
+
+- JDK 8 or higher
+- Maven 3.6.0 or higher
+- Apache Tomcat 9 or equivalent
+- Modern web browser
 
 ## Cách build dự án
 
@@ -29,11 +46,31 @@ Sau khi build thành công, file WAR sẽ được tạo tại `target/websocket
 ### Build Client
 
 ```bash
-cd websocket-gwt-client
+
 mvn clean package
 ```
 
 Sau khi build thành công, file WAR sẽ được tạo tại `target/websocket-gwt-client.war`.
+
+## How to Build the Project
+
+### Build Server
+
+```bash
+cd websocket-server-tomcat
+mvn clean package
+```
+
+After a successful build, the WAR file will be created at `target/websocket-server.war`.
+
+### Build Client
+
+```bash
+cd websocket-gwt-client
+mvn clean package
+```
+
+After a successful build, the WAR file will be created at `target/websocket-gwt-client.war`.
 
 ## Cách triển khai
 
@@ -51,7 +88,21 @@ Sau khi build thành công, file WAR sẽ được tạo tại `target/websocket
    [Tomcat_Home]/bin/startup.sh     # Linux/Mac
    ```
 
-### Truy cập ứng dụng
+### Deploy to Apache Tomcat
+
+1. Copy the WAR files to Tomcat's webapps directory:
+   ```
+   copy websocket-server-tomcat/target/websocket-server.war [Tomcat_Home]/webapps/
+   copy websocket-gwt-client/target/websocket-gwt-client.war [Tomcat_Home]/webapps/
+   ```
+   
+2. Start or restart Tomcat (if not running):
+   ```
+   [Tomcat_Home]/bin/startup.bat    # Windows
+   [Tomcat_Home]/bin/startup.sh     # Linux/Mac
+   ```
+
+## Truy cập ứng dụng
 
 1. Truy cập ứng dụng client GWT:
    ```
@@ -59,6 +110,18 @@ Sau khi build thành công, file WAR sẽ được tạo tại `target/websocket
    ```
 
 2. Endpoint WebSocket sẽ có sẵn tại:
+   ```
+   ws://localhost:8080/websocket-server/notification-ws
+   ```
+
+### Access the Application
+
+1. Access the GWT client application:
+   ```
+   http://localhost:8080/websocket-gwt-client/WebSocketClient.html
+   ```
+
+2. The WebSocket endpoint will be available at:
    ```
    ws://localhost:8080/websocket-server/notification-ws
    ```
@@ -72,9 +135,25 @@ Sau khi build thành công, file WAR sẽ được tạo tại `target/websocket
 5. Sử dụng nút "Xóa tin nhắn" để làm sạch bảng tin nhắn
 6. Nhấn "Ngắt kết nối" để đóng kết nối WebSocket
 
+## How to Use
+
+1. Open the GWT client page in your browser
+2. Click the "Connect" button to establish a WebSocket connection with the server
+3. Once connected successfully, you can send messages and receive responses
+4. The server will automatically send notifications periodically (every 2 minutes)
+5. Use the "Clear Messages" button to clean the message board
+6. Click "Disconnect" to close the WebSocket connection
+
 ## Kiểm tra kết nối trực tiếp với server
 
 Bạn có thể kiểm tra kết nối WebSocket từ bất kỳ client WebSocket nào bằng cách kết nối đến:
+```
+ws://localhost:8080/websocket-server/notification-ws
+```
+
+## Direct Connection Test with Server
+
+You can test the WebSocket connection from any WebSocket client by connecting to:
 ```
 ws://localhost:8080/websocket-server/notification-ws
 ```
@@ -85,3 +164,10 @@ ws://localhost:8080/websocket-server/notification-ws
 - Xác nhận rằng cả hai ứng dụng (server và client) đã được triển khai đúng cách
 - Kiểm tra log của Tomcat tại `[Tomcat_Home]/logs/catalina.out` để tìm lỗi
 - Trong trình duyệt, mở Developer Tools (F12) để xem log và lỗi WebSocket
+
+## Troubleshooting
+
+- If you cannot connect, check if Tomcat has started successfully
+- Confirm that both applications (server and client) have been deployed correctly
+- Check Tomcat logs at `[Tomcat_Home]/logs/catalina.out` for errors
+- In the browser, open Developer Tools (F12) to view WebSocket logs and errors

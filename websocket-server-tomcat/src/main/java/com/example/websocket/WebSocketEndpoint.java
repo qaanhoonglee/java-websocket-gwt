@@ -31,8 +31,7 @@ public class WebSocketEndpoint {
         
         handler.sendToSession(session, welcome);
     }
-    
-    @OnMessage
+      @OnMessage
     public void onMessage(String message, Session session) {
         System.out.println("Nhận tin nhắn từ " + session.getId() + ": " + message);
         
@@ -46,11 +45,78 @@ public class WebSocketEndpoint {
             
             // Xử lý theo loại tin nhắn
             switch (type) {
+                case "register":
+                    String userName = jsonObject.getString("userName", "");
+                    if (!userName.isEmpty()) {
+                        // Đăng ký tên người dùng với session hiện tại
+                        handler.registerUserName(session, userName);
+                        
+                        // Gửi thông báo xác nhận đăng ký thành công
+                        String registerResponse = Json.createObjectBuilder()
+                            .add("type", "register-confirm")
+                            .add("userName", userName)
+                            .add("timestamp", System.currentTimeMillis())
+                            .build().toString();
+                        
+                        handler.sendToSession(session, registerResponse);
+                        
+                        // Thông báo cho các client khác
+                        String userJoined = Json.createObjectBuilder()
+                            .add("type", "system")
+                            .add("message", "Người dùng " + userName + " đã tham gia")
+                            .add("timestamp", System.currentTimeMillis())
+                            .build().toString();
+                        
+                        handler.broadcastMessage(userJoined);
+                    }
+                    break;
+                    
                 case "chat":
                     String content = jsonObject.getString("content", "");
+                    String sender = handler.getUserNameFromSession(session);
+                    
+                    // Kiểm tra xem có gửi cho người dùng cụ thể không
+                    if (jsonObject.containsKey("recipient")) {
+                        String recipient = jsonObject.getString("recipient", "");
+                        if (!recipient.isEmpty()) {
+                            String privateMsg = Json.createObjectBuilder()
+                                .add("type", "private-chat")
+                                .add("sender", sender)
+                                .add("content", content)
+                                .add("timestamp", System.currentTimeMillis())
+                                .build().toString();
+                            
+                            // Gửi tin nhắn cho người nhận
+                            boolean sent = handler.sendToUser(recipient, privateMsg);
+                            
+                            // Gửi bản sao tin nhắn cho người gửi
+                            if (sent) {
+                                String confirmMsg = Json.createObjectBuilder()
+                                    .add("type", "private-chat-sent")
+                                    .add("recipient", recipient)
+                                    .add("content", content)
+                                    .add("timestamp", System.currentTimeMillis())
+                                    .build().toString();
+                                
+                                handler.sendToSession(session, confirmMsg);
+                            } else {
+                                // Thông báo nếu không gửi được
+                                String errorMsg = Json.createObjectBuilder()
+                                    .add("type", "error")
+                                    .add("message", "Không thể gửi tin nhắn tới " + recipient)
+                                    .add("timestamp", System.currentTimeMillis())
+                                    .build().toString();
+                                
+                                handler.sendToSession(session, errorMsg);
+                            }
+                            return;
+                        }
+                    }
+                    
+                    // Nếu không có người nhận cụ thể hoặc người nhận rỗng, gửi cho tất cả
                     String response = Json.createObjectBuilder()
                         .add("type", "chat")
-                        .add("sender", session.getId())
+                        .add("sender", sender)
                         .add("content", content)
                         .add("timestamp", System.currentTimeMillis())
                         .build().toString();
@@ -79,16 +145,19 @@ public class WebSocketEndpoint {
             handler.handleMessage(message, session);
         }
     }
-    
-    @OnClose
+      @OnClose
     public void onClose(Session session) {
         System.out.println("Kết nối đóng: " + session.getId());
+        
+        // Lấy tên người dùng trước khi xóa session
+        String userName = handler.getUserNameFromSession(session);
+        
         handler.removeSession(session);
         
         // Thông báo cho các client khác
         String notification = Json.createObjectBuilder()
             .add("type", "system")
-            .add("message", "Client " + session.getId() + " đã ngắt kết nối")
+            .add("message", "Người dùng " + userName + " đã ngắt kết nối")
             .add("timestamp", System.currentTimeMillis())
             .build().toString();
             
