@@ -1,4 +1,4 @@
-package com.example.websocket.client;
+package com.example.websocket.client.manager;
 
 import com.example.websocket.core.WebSocketListener;
 import com.example.websocket.core.WebSocketManager;
@@ -25,27 +25,26 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 import java.util.Date;
 
 /**
- * View hiển thị giao diện chat và xử lý tương tác người dùng
+ * View hiển thị giao diện quản lý và xử lý tương tác người dùng
  * Đã đơn giản hóa để chỉ chứa các sự kiện gửi và nhận message
  */
-public class ChatView extends Composite implements WebSocketListener {
-    
+public class ManagerView extends Composite implements WebSocketListener {
+
     // Constants
-    private static final String HEADER_TITLE = "GWT WebSocket Client";
+    private static final String HEADER_TITLE = "GWT WebSocket Client Manager";
     private static final String SEND_BUTTON_TEXT = "Gửi";
     private static final String CLEAR_BUTTON_TEXT = "Xóa tin nhắn";
-    private static final String STATUS_DISCONNECTED = "Trạng thái: Chưa kết nối";
-    private static final String STATUS_CONNECTED = "Trạng thái Client update: Đã kết nối";
+    private static final String STATUS_DISCONNECTED = "Trạng thái : Chưa kết nối";
+    private static final String STATUS_CONNECTED = "Trạng thái Manage connect: Đã kết nối";
     private static final String STATUS_ERROR = "Trạng thái: Lỗi kết nối";
-    
+
     // Message constants
     private static final int MESSAGE_TIME_COLUMN = 0;
     private static final int MESSAGE_TEXT_COLUMN = 1;
-    private static final int MESSAGE_TABLE_COLUMNS = 2;
-    
+
     // WebSocketManager
     private WebSocketManager webSocketManager;
-    
+
     // UI Components
     private DockLayoutPanel mainPanel = new DockLayoutPanel(Unit.PX);
     private VerticalPanel contentPanel = new VerticalPanel();
@@ -56,78 +55,78 @@ public class ChatView extends Composite implements WebSocketListener {
     private Button clearButton = new Button(CLEAR_BUTTON_TEXT);
     private Label statusLabel = new Label(STATUS_DISCONNECTED);
     private DateTimeFormat timeFormat = DateTimeFormat.getFormat("HH:mm:ss");
-    
+
     /**
      * Constructor
      */
-    public ChatView() {
+    public ManagerView() {
         // Khởi tạo WebSocketManager
         webSocketManager = WebSocketManager.getInstance();
-        
+
         // Đăng ký với WebSocketManager để nhận các sự kiện
         webSocketManager.addListener(this);
-        
+
         // Khởi tạo UI
         initWidget(mainPanel);
         setupUI();
         setupEventHandlers();
-        
+
         // Cập nhật trạng thái
         updateConnectionStatus();
     }
-    
+
     /**
      * Thiết lập giao diện người dùng
      */
     private void setupUI() {
         mainPanel.setSize("100%", "100%");
-        
-        // Tạo panel chứa nội dung 
+
+        // Tạo panel chứa nội dung
         contentPanel.setSpacing(10);
         contentPanel.setWidth("100%");
-        
+
         // Tạo panel tiêu đề
         HorizontalPanel headerPanel = new HorizontalPanel();
         headerPanel.setWidth("100%");
         headerPanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
-        
+
         HTML headerLabel = new HTML("<h2>" + HEADER_TITLE + "</h2>");
         headerPanel.add(headerLabel);
-        
+
         // Tạo panel trạng thái
         HorizontalPanel statusPanel = new HorizontalPanel();
         statusPanel.setSpacing(10);
         statusPanel.add(statusLabel);
-        
+
         // Tạo bảng tin nhắn
         messagesTable.setCellPadding(5);
         messagesTable.setCellSpacing(0);
         messagesTable.setWidth("100%");
-        
+
         scrollPanel.setHeight("300px");
         scrollPanel.setWidth("100%");
-        
+
         // Tạo panel nhập tin nhắn
         HorizontalPanel inputPanel = new HorizontalPanel();
         inputPanel.setSpacing(5);
         inputPanel.setWidth("100%");
-        
+
         messageInput.setWidth("100%");
         inputPanel.add(messageInput);
         inputPanel.add(sendButton);
         inputPanel.add(clearButton);
-        
+
         inputPanel.setCellWidth(messageInput, "100%");
-        
+
         // Thêm các components vào panel chính
         contentPanel.add(headerPanel);
         contentPanel.add(statusPanel);
         contentPanel.add(scrollPanel);
         contentPanel.add(inputPanel);
-        
+
         mainPanel.add(contentPanel);
     }
-    
+
     /**
      * Thiết lập các xử lý sự kiện
      */
@@ -139,7 +138,7 @@ public class ChatView extends Composite implements WebSocketListener {
                 sendMessage();
             }
         });
-        
+
         // Xử lý sự kiện khi nhấn Enter trong input
         messageInput.addKeyDownHandler(new KeyDownHandler() {
             @Override
@@ -149,7 +148,7 @@ public class ChatView extends Composite implements WebSocketListener {
                 }
             }
         });
-        
+
         // Xử lý sự kiện khi nhấn nút xóa tin nhắn
         clearButton.addClickHandler(new ClickHandler() {
             @Override
@@ -158,7 +157,7 @@ public class ChatView extends Composite implements WebSocketListener {
             }
         });
     }
-    
+
     /**
      * Cập nhật trạng thái kết nối hiển thị
      */
@@ -169,7 +168,7 @@ public class ChatView extends Composite implements WebSocketListener {
             statusLabel.setText(STATUS_DISCONNECTED);
         }
     }
-    
+
     /**
      * Gửi tin nhắn
      */
@@ -181,73 +180,73 @@ public class ChatView extends Composite implements WebSocketListener {
             messageInput.setFocus(true);
         }
     }
-    
+
     /**
      * Xóa tin nhắn
      */
     private void clearMessages() {
         messagesTable.removeAllRows();
     }
-    
+
     /**
      * Hiển thị tin nhắn trong bảng
      */
     private void addMessageToTable(String time, String message, boolean isSystemMessage) {
         int row = messagesTable.getRowCount();
-        
+
         messagesTable.setText(row, MESSAGE_TIME_COLUMN, time);
-        
+
         SafeHtmlBuilder safeHtmlBuilder = new SafeHtmlBuilder();
         safeHtmlBuilder.appendEscaped(message);
         HTML messageHtml = new HTML(safeHtmlBuilder.toSafeHtml());
-        
+
         messagesTable.setWidget(row, MESSAGE_TEXT_COLUMN, messageHtml);
-        
+
         // CSS cho các cột
         messagesTable.getCellFormatter().addStyleName(row, MESSAGE_TIME_COLUMN, "gwt-message-time");
         messagesTable.getCellFormatter().addStyleName(row, MESSAGE_TEXT_COLUMN, "gwt-message-content");
-        
+
         // CSS cho hàng chẵn/lẻ
         if (row % 2 == 0) {
             messagesTable.getRowFormatter().addStyleName(row, "gwt-message-row-even");
         }
-        
+
         // CSS cho thông báo hệ thống
         if (isSystemMessage) {
             messagesTable.getRowFormatter().addStyleName(row, "gwt-message-system");
         }
-        
+
         // Cuộn xuống tin nhắn mới nhất
         scrollPanel.scrollToBottom();
     }
-    
+
     // WebSocketListener interface implementations
-    
+
     @Override
     public void onConnected() {
         updateConnectionStatus();
         String time = timeFormat.format(new Date());
         addMessageToTable(time, "Đã kết nối tới server", true);
     }
-    
+
     @Override
     public void onDisconnected(int code, String reason) {
         updateConnectionStatus();
         String time = timeFormat.format(new Date());
         addMessageToTable(time, "Đã ngắt kết nối: " + reason, true);
     }
-    
+
     @Override
     public void onMessageReceived(String message) {
         String time = timeFormat.format(new Date());
-        
+
         // Parse thông tin từ tin nhắn JSON
         String type = WebSocketManager.extractJsonField(message, "type");
-        
+
         if ("chat".equals(type)) {
             String sender = WebSocketManager.extractJsonField(message, "sender");
             String content = WebSocketManager.extractJsonField(message, "content");
-            
+
             if (content != null) {
                 // Hiển thị tin nhắn từ người gửi
                 addMessageToTable(time, sender + ": " + content, false);
@@ -260,7 +259,7 @@ public class ChatView extends Composite implements WebSocketListener {
             }
         }
     }
-    
+
     @Override
     public void onError() {
         statusLabel.setText(STATUS_ERROR);

@@ -1,4 +1,4 @@
-package com.example.websocket.client;
+package com.example.websocket.core;
 
 /**
  * Interface cho các listeners muốn nhận thông báo từ WebSocketManager

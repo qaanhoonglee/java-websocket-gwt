@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
-
+    
     <groupId>com.example</groupId>
-    <artifactId>websocket-gwt-client</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <artifactId>websocket-gwt-client-manager</artifactId>
     <packaging>war</packaging>
+    <version>1.0-SNAPSHOT</version>
+    <name>WebSocket GWT Client Manager</name>
+    
     <properties>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
@@ -15,6 +16,7 @@
         <gwt.version>2.7.0</gwt.version>
         <gwt-maven-plugin.version>2.7.0</gwt-maven-plugin.version>
     </properties>
+    
     <dependencies>
         <!-- WebSocket Core module -->
         <dependency>
@@ -36,16 +38,10 @@
             <version>${gwt.version}</version>
             <scope>provided</scope>
         </dependency>
-        <dependency>
-            <groupId>com.google.gwt</groupId>
-            <artifactId>gwt-servlet</artifactId>
-            <version>${gwt.version}</version>
-            <scope>runtime</scope>
-        </dependency>
     </dependencies>
-
+    
     <build>
-        <finalName>websocket-gwt-client</finalName>
+        <finalName>websocket-gwt-client-manager</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -54,7 +50,17 @@
                 <configuration>
                     <failOnMissingWebXml>false</failOnMissingWebXml>
                 </configuration>
-            </plugin>            <plugin>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.8.1</version>
+                <configuration>
+                    <source>${maven.compiler.source}</source>
+                    <target>${maven.compiler.target}</target>
+                </configuration>
+            </plugin>
+            <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>gwt-maven-plugin</artifactId>
                 <version>${gwt-maven-plugin.version}</version>
@@ -67,8 +73,8 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <module>com.example.websocket.WebSocketClient</module>
-                    <runTarget>WebSocketClient.html</runTarget>
+                    <module>com.example.websocket.WebSocketClientManager</module>
+                    <runTarget>WebSocketClientManager.html</runTarget>
                     <hostedWebapp>${project.build.directory}/${project.build.finalName}</hostedWebapp>
                     <compileReport>true</compileReport>
                     <style>OBF</style>

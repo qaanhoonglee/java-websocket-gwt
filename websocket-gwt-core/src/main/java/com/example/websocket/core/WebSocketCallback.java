@@ -1,4 +1,4 @@
-package com.example.websocket.client;
+package com.example.websocket.core;
 
 /**
  * Interface callback cho các sự kiện WebSocket

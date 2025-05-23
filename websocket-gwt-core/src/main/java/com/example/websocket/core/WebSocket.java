@@ -1,4 +1,4 @@
-package com.example.websocket.client;
+package com.example.websocket.core;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
@@ -50,7 +50,7 @@ public class WebSocket extends JavaScriptObject {
      */
     public final native void setOnmessage(WebSocketCallback callback) /*-{
         this.onmessage = function(e) {
-            callback.@com.example.websocket.client.WebSocketCallback::onMessage(Ljava/lang/String;)(e.data);
+            callback.@com.example.websocket.core.WebSocketCallback::onMessage(Ljava/lang/String;)(e.data);
         };
     }-*/;
     
@@ -59,7 +59,7 @@ public class WebSocket extends JavaScriptObject {
      */
     public final native void setOnopen(WebSocketCallback callback) /*-{
         this.onopen = function(e) {
-            callback.@com.example.websocket.client.WebSocketCallback::onOpen()();
+            callback.@com.example.websocket.core.WebSocketCallback::onOpen()();
         };
     }-*/;
     
@@ -68,7 +68,7 @@ public class WebSocket extends JavaScriptObject {
      */
     public final native void setOnclose(WebSocketCallback callback) /*-{
         this.onclose = function(e) {
-            callback.@com.example.websocket.client.WebSocketCallback::onClose(ILjava/lang/String;)(e.code, e.reason);
+            callback.@com.example.websocket.core.WebSocketCallback::onClose(ILjava/lang/String;)(e.code, e.reason);
         };
     }-*/;
     
@@ -77,7 +77,7 @@ public class WebSocket extends JavaScriptObject {
      */
     public final native void setOnerror(WebSocketCallback callback) /*-{
         this.onerror = function(e) {
-            callback.@com.example.websocket.client.WebSocketCallback::onError()();
+            callback.@com.example.websocket.core.WebSocketCallback::onError()();
         };
     }-*/;
 }

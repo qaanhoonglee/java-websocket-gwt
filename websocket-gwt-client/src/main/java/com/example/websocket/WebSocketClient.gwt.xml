@@ -1,12 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE module PUBLIC "-//Google Inc.//DTD Google Web Toolkit 2.7.0//EN"
   "http://gwtproject.org/doctype/2.7.0/gwt-module.dtd">
-<module rename-to='websocketchat'>
-  <!-- Inherit the core Web Toolkit stuff. -->
+<module rename-to='websocketchat'>  <!-- Inherit the core Web Toolkit stuff. -->
   <inherits name='com.google.gwt.user.User'/>
   <inherits name="com.google.gwt.http.HTTP"/>
   <inherits name="com.google.gwt.i18n.I18N"/>
   <inherits name="com.google.gwt.resources.Resources"/>
+  
+  <!-- Inherit WebSocketCore module -->
+  <inherits name="com.example.websocket.WebSocketCore"/>
   
   <!-- Style -->
   <inherits name='com.google.gwt.user.theme.clean.Clean'/>

@@ -24,3 +24,5 @@ hs_err_pid*
 replay_pid*
 /websocket-server-tomcat/target/
 /websocket-gwt-client/target/
+/websocket-gwt-client-manager/target/
+/websocket-gwt-core/target/

@@ -1,4 +1,4 @@
-package com.example.websocket.client;
+package com.example.websocket.core;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.i18n.client.DateTimeFormat;
@@ -93,20 +93,22 @@ public class WebSocketManager implements WebSocketCallback {
      */
     public void connect() {
         if (webSocket != null) {
-            disconnect();
+            if (webSocket.getReadyState() != WebSocket.CLOSED) {
+                GWT.log("WebSocket đã được kết nối hoặc đang kết nối");
+                return;
+            }
+            webSocket = null;
         }
         
         try {
             GWT.log("Đang kết nối tới " + serverUrl);
             webSocket = WebSocket.create(serverUrl);
-            
-            // Đăng ký callback
             webSocket.setOnopen(this);
-            webSocket.setOnclose(this);
             webSocket.setOnmessage(this);
+            webSocket.setOnclose(this);
             webSocket.setOnerror(this);
         } catch (Exception e) {
-            GWT.log("Lỗi khi tạo kết nối WebSocket: " + e.getMessage());
+            GWT.log("Lỗi kết nối WebSocket: " + e.getMessage());
             notifyError();
         }
     }
@@ -116,14 +118,7 @@ public class WebSocketManager implements WebSocketCallback {
      */
     public void disconnect() {
         if (webSocket != null) {
-            try {
-                webSocket.close();
-            } catch (Exception e) {
-                GWT.log("Lỗi khi đóng kết nối WebSocket: " + e.getMessage());
-            } finally {
-                webSocket = null;
-                isConnected = false;
-            }
+            webSocket.close();
         }
     }
     
@@ -136,10 +131,9 @@ public class WebSocketManager implements WebSocketCallback {
                 webSocket.send(message);
             } catch (Exception e) {
                 GWT.log("Lỗi khi gửi tin nhắn: " + e.getMessage());
-                notifyError();
             }
         } else {
-            GWT.log("Không thể gửi tin nhắn: WebSocket không được kết nối");
+            GWT.log("Không thể gửi tin nhắn: WebSocket chưa kết nối");
         }
     }
     
@@ -154,12 +148,12 @@ public class WebSocketManager implements WebSocketCallback {
         jsonBuilder.append("\"sender\": \"").append(escapeJsonString(currentUserName)).append("\",");
         jsonBuilder.append("\"content\": \"").append(escapeJsonString(content)).append("\",");
         
-        // Thêm người nhận nếu có
+        // Thêm người nhận nếu được chỉ định
         if (recipient != null && !recipient.isEmpty()) {
             jsonBuilder.append("\"recipient\": \"").append(escapeJsonString(recipient)).append("\",");
         }
         
-        jsonBuilder.append("\"timestamp\": ").append(new Date().getTime());
+        jsonBuilder.append("\"timestamp\": ").append(System.currentTimeMillis());
         jsonBuilder.append("}");
         
         sendMessage(jsonBuilder.toString());
@@ -173,14 +167,13 @@ public class WebSocketManager implements WebSocketCallback {
             return;
         }
         
-        this.currentUserName = userName.trim();
+        currentUserName = userName;
         
-        // Tạo tin nhắn JSON để đăng ký tên
+        // Tạo tin nhắn JSON để đăng ký tên người dùng
         StringBuilder jsonBuilder = new StringBuilder();
         jsonBuilder.append("{");
         jsonBuilder.append("\"type\": \"register\",");
-        jsonBuilder.append("\"userName\": \"").append(escapeJsonString(currentUserName)).append("\",");
-        jsonBuilder.append("\"timestamp\": ").append(new Date().getTime());
+        jsonBuilder.append("\"userName\": \"").append(escapeJsonString(userName)).append("\"");
         jsonBuilder.append("}");
         
         sendMessage(jsonBuilder.toString());
@@ -190,40 +183,41 @@ public class WebSocketManager implements WebSocketCallback {
      * Gửi ping để kiểm tra kết nối
      */
     public void sendPing() {
-        // Tạo tin nhắn JSON ping
-        StringBuilder jsonBuilder = new StringBuilder();
-        jsonBuilder.append("{");
-        jsonBuilder.append("\"type\": \"ping\",");
-        jsonBuilder.append("\"timestamp\": ").append(new Date().getTime());
-        jsonBuilder.append("}");
-        
-        sendMessage(jsonBuilder.toString());
+        if (isConnected) {
+            StringBuilder jsonBuilder = new StringBuilder();
+            jsonBuilder.append("{");
+            jsonBuilder.append("\"type\": \"ping\",");
+            jsonBuilder.append("\"timestamp\": ").append(System.currentTimeMillis());
+            jsonBuilder.append("}");
+            
+            sendMessage(jsonBuilder.toString());
+        }
     }
     
     // Implementations of WebSocketCallback interface
     
     @Override
     public void onOpen() {
+        GWT.log("WebSocket đã kết nối thành công!");
         isConnected = true;
-        GWT.log("WebSocket đã kết nối");
         
-        // Thông báo cho tất cả các listeners
-        for (WebSocketListener listener : listeners) {
-            listener.onConnected();
-        }
-        
-        // Đăng ký tên người dùng nếu đã được đặt
+        // Nếu đã có tên người dùng, đăng ký với server
         if (currentUserName != null && !currentUserName.isEmpty()) {
             registerUserName(currentUserName);
+        }
+        
+        // Thông báo cho tất cả listeners
+        for (WebSocketListener listener : listeners) {
+            listener.onConnected();
         }
     }
     
     @Override
     public void onClose(int code, String reason) {
+        GWT.log("WebSocket đã đóng: " + code + " - " + reason);
         isConnected = false;
-        GWT.log("WebSocket đã đóng với mã: " + code + ", lý do: " + reason);
         
-        // Thông báo cho tất cả các listeners
+        // Thông báo cho tất cả listeners
         for (WebSocketListener listener : listeners) {
             listener.onDisconnected(code, reason);
         }
@@ -231,9 +225,9 @@ public class WebSocketManager implements WebSocketCallback {
     
     @Override
     public void onMessage(String message) {
-        GWT.log("Nhận được tin nhắn: " + message);
+        GWT.log("Nhận tin nhắn WebSocket: " + message);
         
-        // Thông báo cho tất cả các listeners
+        // Thông báo cho tất cả listeners
         for (WebSocketListener listener : listeners) {
             listener.onMessageReceived(message);
         }
@@ -259,31 +253,36 @@ public class WebSocketManager implements WebSocketCallback {
      * Lưu ý: Đây là một cách thực hiện đơn giản, không phải là một JSON parser đầy đủ
      */
     public static String extractJsonField(String jsonString, String fieldName) {
-        String searchPattern = "\"" + fieldName + "\"\\s*:\\s*\"";
-        int startIndex = jsonString.indexOf(searchPattern);
-        if (startIndex < 0) {
-            // Kiểm tra trường hợp giá trị không phải là chuỗi (không có dấu ngoặc kép)
-            searchPattern = "\"" + fieldName + "\"\\s*:\\s*";
-            startIndex = jsonString.indexOf(searchPattern);
-            if (startIndex < 0) {
+        int fieldIndex = jsonString.indexOf("\"" + fieldName + "\"");
+        if (fieldIndex < 0) {
+            return null;
+        }
+        
+        int colonIndex = jsonString.indexOf(":", fieldIndex);
+        if (colonIndex < 0) {
+            return null;
+        }
+        
+        int valueStartIndex = jsonString.indexOf("\"", colonIndex);
+        if (valueStartIndex < 0) {
+            // Có thể là số hoặc boolean
+            int commaIndex = jsonString.indexOf(",", colonIndex);
+            int bracketIndex = jsonString.indexOf("}", colonIndex);
+            int endIndex = (commaIndex > 0 && commaIndex < bracketIndex) ? commaIndex : bracketIndex;
+            
+            if (endIndex > 0) {
+                return jsonString.substring(colonIndex + 1, endIndex).trim();
+            } else {
                 return null;
             }
-            startIndex += searchPattern.length();
-            
-            // Tìm dấu phẩy hoặc dấu ngoặc đóng
-            int endIndex = jsonString.indexOf(",", startIndex);
-            if (endIndex < 0) {
-                endIndex = jsonString.indexOf("}", startIndex);
-            }
-            if (endIndex < 0) {
-                return jsonString.substring(startIndex);
-            }
-            return jsonString.substring(startIndex, endIndex).trim();
-        } else {
-            startIndex += searchPattern.length();
-            int endIndex = jsonString.indexOf("\"", startIndex);
-            return endIndex < 0 ? null : jsonString.substring(startIndex, endIndex);
         }
+        
+        int valueEndIndex = jsonString.indexOf("\"", valueStartIndex + 1);
+        if (valueEndIndex < 0) {
+            return null;
+        }
+        
+        return jsonString.substring(valueStartIndex + 1, valueEndIndex);
     }
     
     /**
@@ -294,38 +293,12 @@ public class WebSocketManager implements WebSocketCallback {
             return "";
         }
         
-        StringBuilder escaped = new StringBuilder();
-        for (int i = 0; i < input.length(); i++) {
-            char c = input.charAt(i);
-            switch (c) {
-                case '\"':
-                    escaped.append("\\\"");
-                    break;
-                case '\\':
-                    escaped.append("\\\\");
-                    break;
-                case '/':
-                    escaped.append("\\/");
-                    break;
-                case '\b':
-                    escaped.append("\\b");
-                    break;
-                case '\f':
-                    escaped.append("\\f");
-                    break;
-                case '\n':
-                    escaped.append("\\n");
-                    break;
-                case '\r':
-                    escaped.append("\\r");
-                    break;
-                case '\t':
-                    escaped.append("\\t");
-                    break;
-                default:
-                    escaped.append(c);
-            }
-        }
-        return escaped.toString();
+        return input.replace("\\", "\\\\")
+                   .replace("\"", "\\\"")
+                   .replace("\b", "\\b")
+                   .replace("\f", "\\f")
+                   .replace("\n", "\\n")
+                   .replace("\r", "\\r")
+                   .replace("\t", "\\t");
     }
 }
